@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const protectedRoutes = require('./routes/protectedRoutes');
+const sweetRoutes = require('./routes/sweetRoutes');
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api', protectedRoutes);
+app.use('/api/sweets', sweetRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'OK' });

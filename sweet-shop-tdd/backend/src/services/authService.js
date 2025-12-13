@@ -39,4 +39,33 @@ const registerUser = async (email, password, role = 'user') => {
   };
 };
 
-module.exports = { registerUser };
+const loginUser = async (email, password) => {
+  if (!email || !password) {
+    throw new Error('Email and password are required');
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new Error('Invalid credentials');
+  }
+
+  const isPasswordValid = await comparePassword(password, user.password);
+
+  if (!isPasswordValid) {
+    throw new Error('Invalid credentials');
+  }
+
+  const token = generateToken(user._id, user.email, user.role);
+
+  return {
+    token,
+    user: {
+      id: user._id,
+      email: user.email,
+      role: user.role
+    }
+  };
+};
+
+module.exports = { registerUser, loginUser };
