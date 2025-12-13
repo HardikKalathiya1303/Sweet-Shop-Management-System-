@@ -1,4 +1,5 @@
-const { createSweet, getAllSweets, searchSweets } = require('../services/sweetService');
+const { createSweet, getAllSweets, searchSweets, updateSweet, deleteSweet } = require('../services/sweetService');
+const mongoose = require('mongoose');
 
 const create = async (req, res) => {
   try {
@@ -42,4 +43,42 @@ const search = async (req, res) => {
   }
 };
 
-module.exports = { create, getAll, search };
+const update = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid sweet ID' });
+    }
+
+    const sweet = await updateSweet(id, req.body);
+
+    res.status(200).json({ sweet });
+  } catch (error) {
+    if (error.message === 'Sweet not found') {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const remove = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid sweet ID' });
+    }
+
+    await deleteSweet(id);
+
+    res.status(200).json({ message: 'Sweet deleted successfully' });
+  } catch (error) {
+    if (error.message === 'Sweet not found') {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(400).json({ message: error.message });
+  }
+};
+
+module.exports = { create, getAll, search, update, remove };

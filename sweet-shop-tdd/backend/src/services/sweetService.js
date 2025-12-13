@@ -69,4 +69,36 @@ const searchSweets = async (filters) => {
   return sweets;
 };
 
-module.exports = { createSweet, getAllSweets, searchSweets };
+const updateSweet = async (id, updateData) => {
+  if (updateData.price !== undefined && updateData.price < 0) {
+    throw new Error('Price cannot be negative');
+  }
+
+  if (updateData.quantity !== undefined && updateData.quantity < 0) {
+    throw new Error('Quantity cannot be negative');
+  }
+
+  const sweet = await Sweet.findByIdAndUpdate(
+    id,
+    { ...updateData, updatedAt: Date.now() },
+    { new: true, runValidators: true }
+  );
+
+  if (!sweet) {
+    throw new Error('Sweet not found');
+  }
+
+  return sweet;
+};
+
+const deleteSweet = async (id) => {
+  const sweet = await Sweet.findByIdAndDelete(id);
+
+  if (!sweet) {
+    throw new Error('Sweet not found');
+  }
+
+  return sweet;
+};
+
+module.exports = { createSweet, getAllSweets, searchSweets, updateSweet, deleteSweet };

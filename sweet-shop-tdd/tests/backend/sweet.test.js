@@ -294,4 +294,188 @@ describe('Sweet Management', () => {
       expect(response.status).toBe(401);
     });
   });
+    describe('PUT /api/sweets/:id', () => {
+    let sweetId;
+
+    beforeEach(async () => {
+      const sweetData = {
+        name: 'Original Sweet',
+        category: 'Chocolate',
+        price: 2.99,
+        quantity: 100
+      };
+
+      const response = await request(app)
+        .post('/api/sweets')
+        .set('Authorization', `Bearer ${token}`)
+        .send(sweetData);
+
+      sweetId = response.body.sweet._id;
+    });
+
+    test('should update sweet with valid data', async () => {
+      const updateData = {
+        name: 'Updated Sweet',
+        category: 'Gummy',
+        price: 3.99,
+        quantity: 150
+      };
+
+      const response = await request(app)
+        .put(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(updateData);
+
+      expect(response.status).toBe(200);
+      expect(response.body.sweet.name).toBe(updateData.name);
+      expect(response.body.sweet.category).toBe(updateData.category);
+      expect(response.body.sweet.price).toBe(updateData.price);
+      expect(response.body.sweet.quantity).toBe(updateData.quantity);
+    });
+
+    test('should partially update sweet', async () => {
+      const updateData = {
+        price: 4.99
+      };
+
+      const response = await request(app)
+        .put(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(updateData);
+
+      expect(response.status).toBe(200);
+      expect(response.body.sweet.price).toBe(updateData.price);
+      expect(response.body.sweet.name).toBe('Original Sweet');
+    });
+
+    test('should fail to update sweet without authentication', async () => {
+      const updateData = {
+        name: 'Updated Sweet'
+      };
+
+      const response = await request(app)
+        .put(`/api/sweets/${sweetId}`)
+        .send(updateData);
+
+      expect(response.status).toBe(401);
+    });
+
+    test('should fail to update sweet with invalid id', async () => {
+      const updateData = {
+        name: 'Updated Sweet'
+      };
+
+      const response = await request(app)
+        .put('/api/sweets/invalidid123')
+        .set('Authorization', `Bearer ${token}`)
+        .send(updateData);
+
+      expect(response.status).toBe(400);
+    });
+
+    test('should fail to update sweet with negative price', async () => {
+      const updateData = {
+        price: -5.99
+      };
+
+      const response = await request(app)
+        .put(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(updateData);
+
+      expect(response.status).toBe(400);
+    });
+
+    test('should fail to update sweet with negative quantity', async () => {
+      const updateData = {
+        quantity: -10
+      };
+
+      const response = await request(app)
+        .put(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(updateData);
+
+      expect(response.status).toBe(400);
+    });
+
+    test('should fail to update non-existent sweet', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const updateData = {
+        name: 'Updated Sweet'
+      };
+
+      const response = await request(app)
+        .put(`/api/sweets/${fakeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(updateData);
+
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe('DELETE /api/sweets/:id', () => {
+    let sweetId;
+
+    beforeEach(async () => {
+      const sweetData = {
+        name: 'Sweet to Delete',
+        category: 'Chocolate',
+        price: 2.99,
+        quantity: 100
+      };
+
+      const response = await request(app)
+        .post('/api/sweets')
+        .set('Authorization', `Bearer ${token}`)
+        .send(sweetData);
+
+      sweetId = response.body.sweet._id;
+    });
+
+    test('should delete sweet as admin', async () => {
+      const response = await request(app)
+        .delete(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('message');
+
+      const checkSweet = await Sweet.findById(sweetId);
+      expect(checkSweet).toBeNull();
+    });
+
+    test('should fail to delete sweet as regular user', async () => {
+      const response = await request(app)
+        .delete(`/api/sweets/${sweetId}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(403);
+    });
+
+    test('should fail to delete sweet without authentication', async () => {
+      const response = await request(app)
+        .delete(`/api/sweets/${sweetId}`);
+
+      expect(response.status).toBe(401);
+    });
+
+    test('should fail to delete sweet with invalid id', async () => {
+      const response = await request(app)
+        .delete('/api/sweets/invalidid123')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(400);
+    });
+
+    test('should fail to delete non-existent sweet', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+
+      const response = await request(app)
+        .delete(`/api/sweets/${fakeId}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(404);
+    });
+  });
 });
