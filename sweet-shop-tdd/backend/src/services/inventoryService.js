@@ -26,4 +26,22 @@ const purchaseSweet = async (id, quantity) => {
   return sweet;
 };
 
-module.exports = { purchaseSweet };
+const restockSweet = async (id, quantity) => {
+  if (!quantity || quantity <= 0) {
+    throw new Error('Quantity must be greater than 0');
+  }
+
+  const sweet = await Sweet.findById(id);
+
+  if (!sweet) {
+    throw new Error('Sweet not found');
+  }
+
+  sweet.quantity += quantity;
+  sweet.updatedAt = Date.now();
+  await sweet.save();
+
+  return sweet;
+};
+
+module.exports = { purchaseSweet, restockSweet };

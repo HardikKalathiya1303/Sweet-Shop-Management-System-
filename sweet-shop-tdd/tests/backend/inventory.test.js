@@ -188,4 +188,155 @@ describe('Inventory Management - Purchase', () => {
       expect(response.body.message).toContain('out of stock');
     });
   });
+    describe('POST /api/sweets/:id/restock', () => {
+    let sweetId;
+
+    beforeEach(async () => {
+      const sweetData = {
+        name: 'Chocolate Bar',
+        category: 'Chocolate',
+        price: 2.99,
+        quantity: 50
+      };
+
+      const sweetResponse = await request(app)
+        .post('/api/sweets')
+        .set('Authorization', `Bearer ${token}`)
+        .send(sweetData);
+
+      sweetId = sweetResponse.body.sweet._id;
+    });
+
+    test('should restock sweet as admin with valid quantity', async () => {
+      const restockData = {
+        quantity: 100
+      };
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(restockData);
+
+      expect(response.status).toBe(200);
+      expect(response.body.sweet.quantity).toBe(150);
+      expect(response.body).toHaveProperty('message');
+    });
+
+    test('should fail to restock as regular user', async () => {
+      const restockData = {
+        quantity: 100
+      };
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(restockData);
+
+      expect(response.status).toBe(403);
+    });
+
+    test('should fail to restock without authentication', async () => {
+      const restockData = {
+        quantity: 100
+      };
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .send(restockData);
+
+      expect(response.status).toBe(401);
+    });
+
+    test('should fail to restock with zero quantity', async () => {
+      const restockData = {
+        quantity: 0
+      };
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(restockData);
+
+      expect(response.status).toBe(400);
+    });
+
+    test('should fail to restock with negative quantity', async () => {
+      const restockData = {
+        quantity: -50
+      };
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(restockData);
+
+      expect(response.status).toBe(400);
+    });
+
+    test('should fail to restock without quantity', async () => {
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({});
+
+      expect(response.status).toBe(400);
+    });
+
+    test('should fail to restock with invalid sweet id', async () => {
+      const restockData = {
+        quantity: 100
+      };
+
+      const response = await request(app)
+        .post('/api/sweets/invalidid123/restock')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(restockData);
+
+      expect(response.status).toBe(400);
+    });
+
+    test('should fail to restock non-existent sweet', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const restockData = {
+        quantity: 100
+      };
+
+      const response = await request(app)
+        .post(`/api/sweets/${fakeId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(restockData);
+
+      expect(response.status).toBe(404);
+    });
+
+    test('should restock out of stock sweet', async () => {
+      await Sweet.findByIdAndUpdate(sweetId, { quantity: 0 });
+
+      const restockData = {
+        quantity: 200
+      };
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(restockData);
+
+      expect(response.status).toBe(200);
+      expect(response.body.sweet.quantity).toBe(200);
+    });
+
+    test('should restock with large quantity', async () => {
+      const restockData = {
+        quantity: 10000
+      };
+
+      const response = await request(app)
+        .post(`/api/sweets/${sweetId}/restock`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(restockData);
+
+      expect(response.status).toBe(200);
+      expect(response.body.sweet.quantity).toBe(10050);
+    });
+  });
 });
