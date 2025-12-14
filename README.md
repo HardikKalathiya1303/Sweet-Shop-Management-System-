@@ -117,7 +117,3 @@ AI was most helpful for:
 Writing CRUD endpoints and validation logic
 Debugging and fixing common React/Node issues
 Improving documentation clarity
-
-
-
-## Project Structure
