@@ -5,19 +5,27 @@ import {
   HomeIcon,
   CakeIcon,
   PlusCircleIcon,
-  ChartBarIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
 
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-  { name: "All Sweets", href: "/sweets", icon: CakeIcon },
-  { name: "Add Sweet", href: "/sweets/add", icon: PlusCircleIcon },
-  { name: "Analytics", href: "/analytics", icon: ChartBarIcon },
-];
-
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const { isAdmin } = useAuth();
+
+  const navigation = isAdmin
+    ? [
+        {
+          name: "Admin Dashboard",
+          href: "/admin-dashboard",
+          icon: ShieldCheckIcon,
+        },
+        { name: "All Sweets", href: "/sweets", icon: CakeIcon },
+        { name: "Add Sweet", href: "/sweets/add", icon: PlusCircleIcon },
+      ]
+    : [
+        { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
+        { name: "Browse Sweets", href: "/sweets", icon: CakeIcon },
+      ];
 
   return (
     <>
@@ -69,20 +77,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             >
               <item.icon className="h-5 w-5" />
               {item.name}
-              {item.name === "Add Sweet" && isAdmin && (
-                <span className="ml-auto px-2 py-1 text-xs bg-yellow-400 text-purple-900 rounded-full font-semibold">
-                  Admin
-                </span>
-              )}
             </NavLink>
           ))}
         </nav>
 
         <div className="p-4 border-t border-white/10">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white">
-            <p className="text-sm font-semibold mb-1">Need Help?</p>
+            <p className="text-sm font-semibold mb-1">
+              {isAdmin ? "👨‍💼 Admin Mode" : "👤 User Mode"}
+            </p>
             <p className="text-xs text-white/70">
-              Contact support for assistance
+              {isAdmin
+                ? "Full system access"
+                : "Browse and purchase sweets"}
             </p>
           </div>
         </div>
